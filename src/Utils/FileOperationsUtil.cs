@@ -528,7 +528,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         string gitHubToken = EnvironmentUtil.GetVariableStrict("GH__TOKEN");
 
-        //  await _gitUtil.CommitAndPush(gitDirectory, "Automated update", gitHubToken, "Jake Soenneker", "jake@soenneker.com", cancellationToken);
+        await _gitUtil.CommitAndPush(gitDirectory, "Automated update", gitHubToken, "Jake Soenneker", "jake@soenneker.com", cancellationToken);
     }
 
     private sealed record SpecCandidate(string CategoryKey, string FilePath, int Version, int Rollout, string ComponentPrefix);
