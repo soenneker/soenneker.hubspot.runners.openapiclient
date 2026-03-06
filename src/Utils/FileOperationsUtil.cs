@@ -25,7 +25,6 @@ namespace Soenneker.HubSpot.Runners.OpenApiClient.Utils;
 ///<inheritdoc cref="IFileOperationsUtil"/>
 public sealed class FileOperationsUtil : IFileOperationsUtil
 {
-    private const string SourceSpecsRepository = "https://github.com/HubSpot/HubSpot-public-api-spec-collection";
     private static readonly string[] _componentSections =
     [
         "schemas",
@@ -71,7 +70,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         var zipFilePath = Path.Combine(tempDir, "main.zip");
 
-        await _fileDownloadUtil.Download("https://github.com/HubSpot/HubSpot-public-api-spec-collection/archive/refs/heads/main.zip", zipFilePath, cancellationToken: cancellationToken);
+        await _fileDownloadUtil.Download("https://github.com/HubSpot/HubSpot-public-api-spec-collection/archive/refs/heads/main.zip", zipFilePath,
+            cancellationToken: cancellationToken);
 
         var specsDir = Path.Combine(tempDir, "main");
 
@@ -104,8 +104,9 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         await DeleteAllExceptCsproj(srcDirectory, cancellationToken);
 
-        await _processUtil.Start("kiota", gitDirectory, $"kiota generate -l CSharp -d \"{fixedFilePath}\" -o src -c HubSpotOpenApiClient -n {Constants.Library}",
-                              waitForExit: true, cancellationToken: cancellationToken)
+        await _processUtil.Start("kiota", gitDirectory,
+                              $"kiota generate -l CSharp -d \"{fixedFilePath}\" -o src -c HubSpotOpenApiClient -n {Constants.Library}", waitForExit: true,
+                              cancellationToken: cancellationToken)
                           .NoSync();
 
         await BuildAndPush(gitDirectory, cancellationToken)
@@ -142,8 +143,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
                 candidateByCategory[categoryKey] = candidate;
         }
 
-        List<SpecCandidate> selected = candidateByCategory.Values
-                                                          .OrderBy(c => c.CategoryKey)
+        List<SpecCandidate> selected = candidateByCategory.Values.OrderBy(c => c.CategoryKey)
                                                           .ToList();
 
         _logger.LogInformation("Selected {Count} latest category specs out of {Total} files", selected.Count, allFiles.Count);
@@ -266,7 +266,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
             if (components[section] is not JsonObject sectionObject)
                 continue;
 
-            List<string> keys = sectionObject.Select(kvp => kvp.Key).ToList();
+            List<string> keys = sectionObject.Select(kvp => kvp.Key)
+                                             .ToList();
 
             foreach (string key in keys)
             {
@@ -527,7 +528,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         string gitHubToken = EnvironmentUtil.GetVariableStrict("GH__TOKEN");
 
-        await _gitUtil.CommitAndPush(gitDirectory, "Automated update", gitHubToken, "Jake Soenneker", "jake@soenneker.com", cancellationToken);
+        //  await _gitUtil.CommitAndPush(gitDirectory, "Automated update", gitHubToken, "Jake Soenneker", "jake@soenneker.com", cancellationToken);
     }
 
     private sealed record SpecCandidate(string CategoryKey, string FilePath, int Version, int Rollout, string ComponentPrefix);
