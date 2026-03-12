@@ -4,8 +4,13 @@
   </Folder>
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/build-and-test.yml" />
-    <File Path=".github/workflows/daily-automatic-update.yml" />
+    <File Path=".github/workflows/codeql.yml" />
+    <File Path=".github/workflows/publish-package.yml" />
   </Folder>
-  <Project Path="src/Soenneker.HubSpot.Runners.OpenApiClient.csproj" />
-  <Project Path="test/Soenneker.HubSpot.Runners.OpenApiClient.Tests/Soenneker.HubSpot.Runners.OpenApiClient.Tests.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Soenneker.HubSpot.Runners.OpenApiClient.Tests/Soenneker.HubSpot.Runners.OpenApiClient.Tests.csproj" />
+  </Folder>
 </Solution>

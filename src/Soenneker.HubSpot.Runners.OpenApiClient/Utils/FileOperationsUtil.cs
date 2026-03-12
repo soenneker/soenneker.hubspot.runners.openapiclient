@@ -100,12 +100,12 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         await _openApiFixer.Fix(targetFilePath, fixedFilePath, cancellationToken)
                            .NoSync();
 
-        string srcDirectory = Path.Combine(gitDirectory, "src");
+        string srcDirectory = Path.Combine(gitDirectory, "src", Constants.Library);
 
         await DeleteAllExceptCsproj(srcDirectory, cancellationToken);
 
         await _processUtil.Start("kiota", gitDirectory,
-                              $"kiota generate -l CSharp -d \"{fixedFilePath}\" -o src -c HubSpotOpenApiClient -n {Constants.Library}", waitForExit: true,
+                              $"kiota generate -l CSharp -d \"{fixedFilePath}\" -o src/{Constants.Library} -c HubSpotOpenApiClient -n {Constants.Library}", waitForExit: true,
                               cancellationToken: cancellationToken)
                           .NoSync();
 
@@ -514,7 +514,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
     private async ValueTask BuildAndPush(string gitDirectory, CancellationToken cancellationToken)
     {
-        string projFilePath = Path.Combine(gitDirectory, "src", $"{Constants.Library}.csproj");
+        string projFilePath = Path.Combine(gitDirectory, "src", Constants.Library, $"{Constants.Library}.csproj");
 
         await _dotnetUtil.Restore(projFilePath, cancellationToken: cancellationToken);
 
