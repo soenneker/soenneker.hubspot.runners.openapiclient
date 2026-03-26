@@ -155,7 +155,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
     {
         try
         {
-            string json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            string json = await _fileUtil.Read(filePath, log: false, cancellationToken);
             JsonNode? node = JsonNode.Parse(json);
 
             if (node is not JsonObject root)
@@ -244,7 +244,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
     {
         try
         {
-            string json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            string json = await _fileUtil.Read(filePath, log: false, cancellationToken);
             return JsonNode.Parse(json) as JsonObject;
         }
         catch (Exception ex)
