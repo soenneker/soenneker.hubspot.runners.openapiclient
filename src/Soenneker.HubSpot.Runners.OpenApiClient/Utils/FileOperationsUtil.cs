@@ -1,61 +1,50 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Git.Util.Abstract;
 using Soenneker.HubSpot.Runners.OpenApiClient.Utils.Abstract;
+using Soenneker.OpenApi.Fixer.Abstract;
+using Soenneker.OpenApi.Merger.Abstract;
+using Soenneker.Utils.Directory.Abstract;
 using Soenneker.Utils.Dotnet.Abstract;
 using Soenneker.Utils.Environment;
+using Soenneker.Utils.File.Abstract;
+using Soenneker.Utils.File.Download.Abstract;
 using Soenneker.Utils.Process.Abstract;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using Soenneker.Extensions.ValueTask;
-using Soenneker.Utils.Directory.Abstract;
-using Soenneker.Utils.File.Abstract;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using Soenneker.OpenApi.Fixer.Abstract;
-using Soenneker.Utils.File.Download.Abstract;
 
 namespace Soenneker.HubSpot.Runners.OpenApiClient.Utils;
 
 ///<inheritdoc cref="IFileOperationsUtil"/>
 public sealed class FileOperationsUtil : IFileOperationsUtil
 {
-    private static readonly string[] _componentSections =
-    [
-        "schemas",
-        "parameters",
-        "responses",
-        "requestBodies",
-        "headers",
-        "securitySchemes",
-        "links",
-        "callbacks",
-        "examples"
-    ];
-
     private readonly ILogger<FileOperationsUtil> _logger;
     private readonly IGitUtil _gitUtil;
     private readonly IDotnetUtil _dotnetUtil;
     private readonly IProcessUtil _processUtil;
     private readonly IOpenApiFixer _openApiFixer;
+    private readonly IOpenApiMerger _openApiMerger;
     private readonly IFileUtil _fileUtil;
     private readonly IDirectoryUtil _directoryUtil;
     private readonly IFileDownloadUtil _fileDownloadUtil;
 
-
     public FileOperationsUtil(ILogger<FileOperationsUtil> logger, IGitUtil gitUtil, IDotnetUtil dotnetUtil, IProcessUtil processUtil,
-        IOpenApiFixer openApiFixer, IFileUtil fileUtil, IDirectoryUtil directoryUtil, IFileDownloadUtil fileDownloadUtil)
+        IOpenApiFixer openApiFixer, IOpenApiMerger openApiMerger, IFileUtil fileUtil, IDirectoryUtil directoryUtil, IFileDownloadUtil fileDownloadUtil)
     {
         _logger = logger;
         _gitUtil = gitUtil;
         _dotnetUtil = dotnetUtil;
         _processUtil = processUtil;
         _openApiFixer = openApiFixer;
+        _openApiMerger = openApiMerger;
         _fileUtil = fileUtil;
         _directoryUtil = directoryUtil;
         _fileDownloadUtil = fileDownloadUtil;
@@ -66,14 +55,13 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         string gitDirectory = await _gitUtil.CloneToTempDirectory($"https://github.com/soenneker/{Constants.Library.ToLowerInvariantFast()}",
             cancellationToken: cancellationToken);
 
-        var tempDir = await _directoryUtil.CreateTempDirectory(cancellationToken);
-
-        var zipFilePath = Path.Combine(tempDir, "main.zip");
+        string tempDir = await _directoryUtil.CreateTempDirectory(cancellationToken);
+        string zipFilePath = Path.Combine(tempDir, "main.zip");
 
         await _fileDownloadUtil.Download("https://github.com/HubSpot/HubSpot-public-api-spec-collection/archive/refs/heads/main.zip", zipFilePath,
             cancellationToken: cancellationToken);
 
-        var specsDir = Path.Combine(tempDir, "main");
+        string specsDir = Path.Combine(tempDir, "main");
 
         await ZipFile.ExtractToDirectoryAsync(zipFilePath, specsDir, cancellationToken);
 
@@ -88,13 +76,25 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         await _fileUtil.DeleteIfExists(targetFilePath, cancellationToken: cancellationToken);
         await _fileUtil.DeleteIfExists(fixedFilePath, cancellationToken: cancellationToken);
 
-        List<SpecCandidate> latestSpecCandidates = await GetLatestSpecCandidates(publicApiSpecsDirectory, cancellationToken);
+        List<SpecCandidate> latestSpecCandidates = await GetLatestSpecCandidates(publicApiSpecsDirectory, cancellationToken).ConfigureAwait(false);
 
         if (latestSpecCandidates.Count == 0)
-            throw new Exception("No valid HubSpot OpenAPI specs were found.");
+            throw new InvalidOperationException("No valid HubSpot OpenAPI specs were found.");
 
-        string mergedSpec = await MergeOpenApiSpecs(latestSpecCandidates, cancellationToken);
-        await _fileUtil.Write(targetFilePath, mergedSpec, true, cancellationToken);
+        var mergeInputs = new List<(string prefix, string filePath)>(latestSpecCandidates.Count);
+
+        foreach (SpecCandidate candidate in latestSpecCandidates)
+        {
+            string mergePrefix = await GetMergePrefix(candidate, cancellationToken).ConfigureAwait(false);
+            mergeInputs.Add((mergePrefix, candidate.FilePath));
+        }
+
+        _logger.LogInformation("Selected {Count} latest HubSpot category specs. Merging with IOpenApiMerger...", mergeInputs.Count);
+
+        OpenApiDocument mergedOpenApiDocument = await _openApiMerger.MergeOpenApis(mergeInputs, cancellationToken).ConfigureAwait(false);
+        string mergedOpenApiJson = _openApiMerger.ToJson(mergedOpenApiDocument);
+
+        await _fileUtil.Write(targetFilePath, mergedOpenApiJson, true, cancellationToken).ConfigureAwait(false);
 
         await _processUtil.Start("dotnet", null, "tool update --global Microsoft.OpenApi.Kiota", waitForExit: true, cancellationToken: cancellationToken);
         await _openApiFixer.Fix(targetFilePath, fixedFilePath, cancellationToken)
@@ -126,12 +126,11 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
             if (!TryParseSpecMetadata(file, publicApiSpecsDirectory, out string categoryKey, out int version, out int rollout))
                 continue;
 
-            bool isOpenApiSpec = await IsOpenApiSpec(file, cancellationToken);
+            bool isOpenApiSpec = await IsOpenApiSpec(file, cancellationToken).ConfigureAwait(false);
             if (!isOpenApiSpec)
                 continue;
 
-            string componentPrefix = ToSafeIdentifier(categoryKey);
-            var candidate = new SpecCandidate(categoryKey, file, version, rollout, componentPrefix);
+            var candidate = new SpecCandidate(categoryKey, file, version, rollout);
 
             if (!candidateByCategory.TryGetValue(categoryKey, out SpecCandidate? existing))
             {
@@ -199,45 +198,26 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         return !string.IsNullOrWhiteSpace(categoryKey);
     }
 
-    private async ValueTask<string> MergeOpenApiSpecs(List<SpecCandidate> candidates, CancellationToken cancellationToken)
+    private async ValueTask<string> GetMergePrefix(SpecCandidate candidate, CancellationToken cancellationToken)
     {
-        var mergedRoot = new JsonObject
+        JsonObject? spec = await ReadJsonObject(candidate.FilePath, cancellationToken).ConfigureAwait(false);
+
+        if (spec?["paths"] is JsonObject paths)
         {
-            ["openapi"] = "3.0.1",
-            ["info"] = new JsonObject
+            foreach (string pathKey in paths.Select(kvp => kvp.Key))
             {
-                ["title"] = "HubSpot Public API",
-                ["version"] = "1.0.0"
-            },
-            ["paths"] = new JsonObject(),
-            ["components"] = new JsonObject(),
-            ["servers"] = new JsonArray(),
-            ["tags"] = new JsonArray()
-        };
+                string? mergePrefix = TryGetTopLevelPathSegment(pathKey);
 
-        var mergedPaths = mergedRoot["paths"]!.AsObject();
-        var mergedComponents = mergedRoot["components"]!.AsObject();
-        var mergedServers = mergedRoot["servers"]!.AsArray();
-        var mergedTags = mergedRoot["tags"]!.AsArray();
-
-        foreach (SpecCandidate candidate in candidates)
-        {
-            JsonObject? spec = await ReadJsonObject(candidate.FilePath, cancellationToken);
-
-            if (spec == null)
-                continue;
-
-            RewriteComponentNamesAndRefs(spec, candidate.ComponentPrefix);
-            MergePaths(spec, mergedPaths);
-            MergeComponents(spec, mergedComponents);
-            MergeServers(spec, mergedServers);
-            MergeTags(spec, mergedTags);
+                if (!string.IsNullOrWhiteSpace(mergePrefix))
+                    return mergePrefix;
+            }
         }
 
-        return mergedRoot.ToJsonString(new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        string fallbackPrefix = NormalizePathPrefix(candidate.CategoryKey);
+
+        _logger.LogWarning("Falling back to category-derived merge prefix '{MergePrefix}' for {FilePath}", fallbackPrefix, candidate.FilePath);
+
+        return fallbackPrefix;
     }
 
     private async ValueTask<JsonObject?> ReadJsonObject(string filePath, CancellationToken cancellationToken)
@@ -254,208 +234,30 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         }
     }
 
-    private static void RewriteComponentNamesAndRefs(JsonObject root, string componentPrefix)
+    private static string? TryGetTopLevelPathSegment(string path)
     {
-        if (root["components"] is not JsonObject components)
-            return;
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
 
-        var refMap = new Dictionary<string, string>(StringComparer.Ordinal);
+        string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (string section in _componentSections)
-        {
-            if (components[section] is not JsonObject sectionObject)
-                continue;
-
-            List<string> keys = sectionObject.Select(kvp => kvp.Key)
-                                             .ToList();
-
-            foreach (string key in keys)
-            {
-                JsonNode? value = sectionObject[key];
-                sectionObject.Remove(key);
-
-                string newKey = $"{componentPrefix}_{key}";
-                while (sectionObject.ContainsKey(newKey))
-                {
-                    newKey = "_" + newKey;
-                }
-
-                sectionObject[newKey] = value?.DeepClone();
-                refMap[$"#/components/{section}/{key}"] = $"#/components/{section}/{newKey}";
-            }
-        }
-
-        if (refMap.Count > 0)
-            RewriteRefs(root, refMap);
+        return segments.Length == 0 ? null : segments[0];
     }
 
-    private static void RewriteRefs(JsonNode? node, Dictionary<string, string> refMap)
-    {
-        if (node is null)
-            return;
-
-        if (node is JsonObject obj)
-        {
-            foreach (KeyValuePair<string, JsonNode?> kvp in obj.ToList())
-            {
-                if (kvp.Key == "$ref" && kvp.Value is JsonValue refValue)
-                {
-                    string? current = refValue.GetValue<string>();
-                    if (current != null && refMap.TryGetValue(current, out string? replacement))
-                    {
-                        obj[kvp.Key] = replacement;
-                    }
-                }
-                else
-                {
-                    RewriteRefs(kvp.Value, refMap);
-                }
-            }
-
-            return;
-        }
-
-        if (node is JsonArray array)
-        {
-            foreach (JsonNode? item in array)
-            {
-                RewriteRefs(item, refMap);
-            }
-        }
-    }
-
-    private static void MergePaths(JsonObject sourceSpec, JsonObject mergedPaths)
-    {
-        if (sourceSpec["paths"] is not JsonObject sourcePaths)
-            return;
-
-        foreach ((string path, JsonNode? pathNode) in sourcePaths)
-        {
-            if (pathNode is null)
-                continue;
-
-            if (mergedPaths[path] is not JsonObject existingPath || pathNode is not JsonObject incomingPath)
-            {
-                mergedPaths[path] = pathNode.DeepClone();
-                continue;
-            }
-
-            foreach ((string method, JsonNode? operationNode) in incomingPath)
-            {
-                existingPath[method] = operationNode?.DeepClone();
-            }
-        }
-    }
-
-    private static void MergeComponents(JsonObject sourceSpec, JsonObject mergedComponents)
-    {
-        if (sourceSpec["components"] is not JsonObject sourceComponents)
-            return;
-
-        foreach ((string sectionName, JsonNode? sectionNode) in sourceComponents)
-        {
-            if (sectionNode is not JsonObject sourceSection)
-                continue;
-
-            JsonObject destinationSection;
-            if (mergedComponents[sectionName] is JsonObject existingSection)
-            {
-                destinationSection = existingSection;
-            }
-            else
-            {
-                destinationSection = new JsonObject();
-                mergedComponents[sectionName] = destinationSection;
-            }
-
-            foreach ((string key, JsonNode? value) in sourceSection)
-            {
-                destinationSection[key] = value?.DeepClone();
-            }
-        }
-    }
-
-    private static void MergeServers(JsonObject sourceSpec, JsonArray mergedServers)
-    {
-        if (sourceSpec["servers"] is not JsonArray sourceServers)
-            return;
-
-        var existingUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (JsonNode? node in mergedServers)
-        {
-            if (node is JsonObject server && server["url"] is JsonValue urlValue)
-            {
-                string? url = urlValue.GetValue<string>();
-                if (!string.IsNullOrWhiteSpace(url))
-                    existingUrls.Add(url);
-            }
-        }
-
-        foreach (JsonNode? node in sourceServers)
-        {
-            if (node is not JsonObject server || server["url"] is not JsonValue urlValue)
-                continue;
-
-            string? url = urlValue.GetValue<string>();
-            if (string.IsNullOrWhiteSpace(url) || existingUrls.Contains(url))
-                continue;
-
-            mergedServers.Add(server.DeepClone());
-            existingUrls.Add(url);
-        }
-    }
-
-    private static void MergeTags(JsonObject sourceSpec, JsonArray mergedTags)
-    {
-        if (sourceSpec["tags"] is not JsonArray sourceTags)
-            return;
-
-        var existingTagNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (JsonNode? node in mergedTags)
-        {
-            if (node is JsonObject tag && tag["name"] is JsonValue nameValue)
-            {
-                string? name = nameValue.GetValue<string>();
-                if (!string.IsNullOrWhiteSpace(name))
-                    existingTagNames.Add(name);
-            }
-        }
-
-        foreach (JsonNode? node in sourceTags)
-        {
-            if (node is not JsonObject tag || tag["name"] is not JsonValue nameValue)
-                continue;
-
-            string? name = nameValue.GetValue<string>();
-            if (string.IsNullOrWhiteSpace(name) || existingTagNames.Contains(name))
-                continue;
-
-            mergedTags.Add(tag.DeepClone());
-            existingTagNames.Add(name);
-        }
-    }
-
-    private static string ToSafeIdentifier(string input)
+    private static string NormalizePathPrefix(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
             return "spec";
 
-        char[] chars = input.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')
-                            .ToArray();
+        string firstSegment = input.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries)
+                                   .FirstOrDefault() ?? input;
 
-        string result = new string(chars);
+        char[] chars = firstSegment.Select(ch => char.IsLetterOrDigit(ch) ? char.ToLowerInvariant(ch) : '-')
+                                   .ToArray();
 
-        result = result.Trim('_');
+        string result = new string(chars).Trim('-');
 
-        if (result.Length == 0)
-            return "spec";
-
-        if (char.IsDigit(result[0]))
-            result = "spec_" + result;
-
-        return result;
+        return result.Length == 0 ? "spec" : result;
     }
 
     public async ValueTask DeleteAllExceptCsproj(string directoryPath, CancellationToken cancellationToken = default)
@@ -531,5 +333,5 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         await _gitUtil.CommitAndPush(gitDirectory, "Automated update", gitHubToken, "Jake Soenneker", "jake@soenneker.com", cancellationToken);
     }
 
-    private sealed record SpecCandidate(string CategoryKey, string FilePath, int Version, int Rollout, string ComponentPrefix);
+    private sealed record SpecCandidate(string CategoryKey, string FilePath, int Version, int Rollout);
 }
