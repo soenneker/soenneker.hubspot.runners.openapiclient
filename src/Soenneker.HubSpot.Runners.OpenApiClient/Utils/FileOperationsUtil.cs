@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.ValueTask;
+using Soenneker.Kiota.Util.Abstract;
 using Soenneker.Git.Util.Abstract;
 using Soenneker.HubSpot.Runners.OpenApiClient.Utils.Abstract;
 using Soenneker.OpenApi.Fixer.Abstract;
@@ -30,6 +31,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
     private readonly IGitUtil _gitUtil;
     private readonly IDotnetUtil _dotnetUtil;
     private readonly IProcessUtil _processUtil;
+    private readonly IKiotaUtil _kiotaUtil;
     private readonly IOpenApiFixer _openApiFixer;
     private readonly IOpenApiMerger _openApiMerger;
     private readonly IFileUtil _fileUtil;
@@ -37,12 +39,13 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
     private readonly IFileDownloadUtil _fileDownloadUtil;
 
     public FileOperationsUtil(ILogger<FileOperationsUtil> logger, IGitUtil gitUtil, IDotnetUtil dotnetUtil, IProcessUtil processUtil,
-        IOpenApiFixer openApiFixer, IOpenApiMerger openApiMerger, IFileUtil fileUtil, IDirectoryUtil directoryUtil, IFileDownloadUtil fileDownloadUtil)
+        IOpenApiFixer openApiFixer, IOpenApiMerger openApiMerger, IFileUtil fileUtil, IDirectoryUtil directoryUtil, IFileDownloadUtil fileDownloadUtil, IKiotaUtil kiotaUtil)
     {
         _logger = logger;
         _gitUtil = gitUtil;
         _dotnetUtil = dotnetUtil;
         _processUtil = processUtil;
+        _kiotaUtil = kiotaUtil;
         _openApiFixer = openApiFixer;
         _openApiMerger = openApiMerger;
         _fileUtil = fileUtil;
@@ -96,7 +99,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         await _fileUtil.Write(targetFilePath, mergedOpenApiJson, true, cancellationToken).ConfigureAwait(false);
 
-        await _processUtil.Start("dotnet", null, "tool update --global Microsoft.OpenApi.Kiota", waitForExit: true, cancellationToken: cancellationToken);
+        await _kiotaUtil.EnsureInstalled(cancellationToken);
         await _openApiFixer.Fix(targetFilePath, fixedFilePath, cancellationToken)
                            .NoSync();
 
@@ -104,10 +107,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         await DeleteAllExceptCsproj(srcDirectory, cancellationToken);
 
-        await _processUtil.Start("kiota", gitDirectory,
-                              $"kiota generate -l CSharp -d \"{fixedFilePath}\" -o src/{Constants.Library} -c HubSpotOpenApiClient -n {Constants.Library}", waitForExit: true,
-                              cancellationToken: cancellationToken)
-                          .NoSync();
+        await _kiotaUtil.Generate(fixedFilePath, "HubSpotOpenApiClient", Constants.Library, gitDirectory, cancellationToken).NoSync();
 
         await BuildAndPush(gitDirectory, cancellationToken)
             .NoSync();

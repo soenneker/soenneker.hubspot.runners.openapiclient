@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Soenneker.Kiota.Util.Registrars;
 using Soenneker.Managers.Runners.Registrars;
 using Soenneker.HubSpot.Runners.OpenApiClient.Utils;
 using Soenneker.HubSpot.Runners.OpenApiClient.Utils.Abstract;
@@ -26,7 +27,8 @@ public static class Startup
                 .AddRunnersManagerAsScoped()
                 .AddOpenApiFixerAsScoped()
                 .AddOpenApiMergerAsScoped()
-                .AddFileDownloadUtilAsScoped();
+                .AddFileDownloadUtilAsScoped()
+                .AddKiotaUtilAsScoped();
 
         return services;
     }
