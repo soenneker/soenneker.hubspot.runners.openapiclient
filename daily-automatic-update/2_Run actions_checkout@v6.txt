@@ -1,0 +1,122 @@
+﻿2026-06-04T19:14:37.4120951Z ##[group]Run actions/checkout@v6
+2026-06-04T19:14:37.4122695Z with:
+2026-06-04T19:14:37.4123633Z   persist-credentials: false
+2026-06-04T19:14:37.4125164Z   repository: ***/***.hubspot.runners.openapiclient
+2026-06-04T19:14:37.4136679Z   token: ***
+2026-06-04T19:14:37.4137586Z   ssh-strict: true
+2026-06-04T19:14:37.4138503Z   ssh-user: git
+2026-06-04T19:14:37.4139568Z   clean: true
+2026-06-04T19:14:37.4140521Z   sparse-checkout-cone-mode: true
+2026-06-04T19:14:37.4141645Z   fetch-depth: 1
+2026-06-04T19:14:37.4142545Z   fetch-tags: false
+2026-06-04T19:14:37.4143478Z   show-progress: true
+2026-06-04T19:14:37.4144411Z   lfs: false
+2026-06-04T19:14:37.4145276Z   submodules: false
+2026-06-04T19:14:37.4146237Z   set-safe-directory: true
+2026-06-04T19:14:37.4147521Z env:
+2026-06-04T19:14:37.4148441Z   GH__USERNAME: ***
+2026-06-04T19:14:37.4149783Z   GH__TOKEN: ***
+2026-06-04T19:14:37.4150961Z   GIT__TOKEN: ***
+2026-06-04T19:14:37.4151902Z   GIT__NAME: ***
+2026-06-04T19:14:37.4153031Z   GIT__EMAIL: ***
+2026-06-04T19:14:37.4154352Z   NUGET__TOKEN: ***
+2026-06-04T19:14:37.4155317Z   PipelineEnvironment: true
+2026-06-04T19:14:37.4156391Z   NUGET_XMLDOC_MODE: skip
+2026-06-04T19:14:37.4157382Z ##[endgroup]
+2026-06-04T19:14:37.5123744Z Syncing repository: ***/***.hubspot.runners.openapiclient
+2026-06-04T19:14:37.5126703Z ##[group]Getting Git version info
+2026-06-04T19:14:37.5129151Z Working directory is '/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient'
+2026-06-04T19:14:37.5132337Z [command]/usr/bin/git version
+2026-06-04T19:14:37.5165639Z git version 2.54.0
+2026-06-04T19:14:37.5222828Z ##[endgroup]
+2026-06-04T19:14:37.5239148Z Temporarily overriding HOME='/home/runner/work/_temp/65394b91-1003-47cd-a3a7-32c71cbea3e0' before making global git config changes
+2026-06-04T19:14:37.5244632Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-04T19:14:37.5251106Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient
+2026-06-04T19:14:37.5291390Z Deleting the contents of '/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient'
+2026-06-04T19:14:37.5296837Z ##[group]Determining repository object format
+2026-06-04T19:14:37.5300289Z ##[endgroup]
+2026-06-04T19:14:37.5303076Z ##[group]Initializing the repository
+2026-06-04T19:14:37.5307222Z [command]/usr/bin/git init /home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient
+2026-06-04T19:14:37.5394665Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-04T19:14:37.5397843Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-04T19:14:37.5401330Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-04T19:14:37.5403607Z hint: call:
+2026-06-04T19:14:37.5404474Z hint:
+2026-06-04T19:14:37.5406095Z hint: 	git config --global init.defaultBranch <name>
+2026-06-04T19:14:37.5407467Z hint:
+2026-06-04T19:14:37.5408700Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-04T19:14:37.5411542Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-04T19:14:37.5413178Z hint:
+2026-06-04T19:14:37.5414053Z hint: 	git branch -m <name>
+2026-06-04T19:14:37.5415065Z hint:
+2026-06-04T19:14:37.5416408Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-04T19:14:37.5419961Z Initialized empty Git repository in /home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git/
+2026-06-04T19:14:37.5424464Z [command]/usr/bin/git remote add origin https://github.com/***/***.hubspot.runners.openapiclient
+2026-06-04T19:14:37.5455437Z ##[endgroup]
+2026-06-04T19:14:37.5457742Z ##[group]Disabling automatic garbage collection
+2026-06-04T19:14:37.5459595Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-04T19:14:37.5486560Z ##[endgroup]
+2026-06-04T19:14:37.5488118Z ##[group]Setting up auth
+2026-06-04T19:14:37.5490140Z Removing SSH command configuration
+2026-06-04T19:14:37.5494078Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-04T19:14:37.5531080Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-04T19:14:37.5825346Z Removing HTTP extra header
+2026-06-04T19:14:37.5832516Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-04T19:14:37.5863820Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-04T19:14:37.6085288Z Removing includeIf entries pointing to credentials config files
+2026-06-04T19:14:37.6088592Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-04T19:14:37.6110087Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-04T19:14:37.6323753Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-04T19:14:37.6359559Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git.path /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:37.6401342Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:37.6455676Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:37.6464142Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:37.6495374Z ##[endgroup]
+2026-06-04T19:14:37.6497428Z ##[group]Fetching the repository
+2026-06-04T19:14:37.6506002Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +55179f2f1092713dcfaf8d5034f42c86b86a2da5:refs/remotes/origin/main
+2026-06-04T19:14:38.1307458Z From https://github.com/***/***.hubspot.runners.openapiclient
+2026-06-04T19:14:38.1308191Z  * [new ref]         55179f2f1092713dcfaf8d5034f42c86b86a2da5 -> origin/main
+2026-06-04T19:14:38.1345063Z [command]/usr/bin/git branch --list --remote origin/main
+2026-06-04T19:14:38.1370507Z   origin/main
+2026-06-04T19:14:38.1378380Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-06-04T19:14:38.1401939Z 55179f2f1092713dcfaf8d5034f42c86b86a2da5
+2026-06-04T19:14:38.1406237Z ##[endgroup]
+2026-06-04T19:14:38.1407122Z ##[group]Determining the checkout info
+2026-06-04T19:14:38.1407930Z ##[endgroup]
+2026-06-04T19:14:38.1410963Z [command]/usr/bin/git sparse-checkout disable
+2026-06-04T19:14:38.1454855Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-04T19:14:38.1480510Z ##[group]Checking out the ref
+2026-06-04T19:14:38.1483765Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-06-04T19:14:38.1546925Z Switched to a new branch 'main'
+2026-06-04T19:14:38.1550644Z branch 'main' set up to track 'origin/main'.
+2026-06-04T19:14:38.1555738Z ##[endgroup]
+2026-06-04T19:14:38.1595042Z [command]/usr/bin/git log -1 --format=%H
+2026-06-04T19:14:38.1617995Z 55179f2f1092713dcfaf8d5034f42c86b86a2da5
+2026-06-04T19:14:38.1627626Z ##[group]Removing auth
+2026-06-04T19:14:38.1628223Z Removing SSH command configuration
+2026-06-04T19:14:38.1632977Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-04T19:14:38.1663723Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-04T19:14:38.1883432Z Removing HTTP extra header
+2026-06-04T19:14:38.1888549Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-04T19:14:38.1924003Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-04T19:14:38.2155660Z Removing includeIf entries pointing to credentials config files
+2026-06-04T19:14:38.2159757Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-04T19:14:38.2184845Z includeif.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git.path
+2026-06-04T19:14:38.2187182Z includeif.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git/worktrees/*.path
+2026-06-04T19:14:38.2188846Z includeif.gitdir:/github/workspace/.git.path
+2026-06-04T19:14:38.2190176Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-06-04T19:14:38.2193627Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git.path
+2026-06-04T19:14:38.2215265Z /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2225289Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git.path /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2261149Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git/worktrees/*.path
+2026-06-04T19:14:38.2287276Z /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2297413Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2328820Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-06-04T19:14:38.2351228Z /github/runner_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2369615Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2405017Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-06-04T19:14:38.2427776Z /github/runner_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2443158Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config
+2026-06-04T19:14:38.2467442Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-04T19:14:38.2675975Z Removing credentials config '/home/runner/work/_temp/git-credentials-859f6c3f-13dd-47d5-8968-d10918259215.config'
+2026-06-04T19:14:38.2683959Z ##[endgroup]

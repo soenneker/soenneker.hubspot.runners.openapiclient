@@ -1,0 +1,25 @@
+﻿2026-06-04T19:14:50.9548494Z ##[group]Run dotnet build src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj --configuration Release --no-restore
+2026-06-04T19:14:50.9550142Z [36;1mdotnet build src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj --configuration Release --no-restore[0m
+2026-06-04T19:14:50.9577850Z shell: /usr/bin/bash -e {0}
+2026-06-04T19:14:50.9578158Z env:
+2026-06-04T19:14:50.9578431Z   GH__USERNAME: ***
+2026-06-04T19:14:50.9578808Z   GH__TOKEN: ***
+2026-06-04T19:14:50.9579138Z   GIT__TOKEN: ***
+2026-06-04T19:14:50.9579659Z   GIT__NAME: ***
+2026-06-04T19:14:50.9579971Z   GIT__EMAIL: ***
+2026-06-04T19:14:50.9580312Z   NUGET__TOKEN: ***
+2026-06-04T19:14:50.9580565Z   PipelineEnvironment: true
+2026-06-04T19:14:50.9580835Z   NUGET_XMLDOC_MODE: skip
+2026-06-04T19:14:50.9581115Z   BUILD_VERSION: 4.0.154
+2026-06-04T19:14:50.9581389Z   DOTNET_ROOT: /usr/share/dotnet
+2026-06-04T19:14:50.9581662Z ##[endgroup]
+2026-06-04T19:14:57.0070938Z ##[warning]/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/src/Soenneker.HubSpot.Runners.OpenApiClient/Program.cs(52,64): warning CS8604: Possible null reference argument for parameter 'name' in 'DeployEnvironment DeployEnvironment.FromName(string name)'. [/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj]
+2026-06-04T19:14:57.4634461Z   Soenneker.HubSpot.Runners.OpenApiClient -> /home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/src/Soenneker.HubSpot.Runners.OpenApiClient/bin/Release/net10.0/Soenneker.HubSpot.Runners.OpenApiClient.dll
+2026-06-04T19:14:57.5000552Z 
+2026-06-04T19:14:57.5001318Z Build succeeded.
+2026-06-04T19:14:57.5007535Z 
+2026-06-04T19:14:57.5014262Z ##[warning]/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/src/Soenneker.HubSpot.Runners.OpenApiClient/Program.cs(52,64): warning CS8604: Possible null reference argument for parameter 'name' in 'DeployEnvironment DeployEnvironment.FromName(string name)'. [/home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj]
+2026-06-04T19:14:57.5037153Z     1 Warning(s)
+2026-06-04T19:14:57.5045678Z     0 Error(s)
+2026-06-04T19:14:57.5054314Z 
+2026-06-04T19:14:57.5057009Z Time Elapsed 00:00:06.29

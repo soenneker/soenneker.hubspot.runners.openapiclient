@@ -1,0 +1,17 @@
+﻿2026-06-04T19:14:38.9163759Z ##[group]Run dotnet restore src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj
+2026-06-04T19:14:38.9164793Z [36;1mdotnet restore src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj[0m
+2026-06-04T19:14:38.9193349Z shell: /usr/bin/bash -e {0}
+2026-06-04T19:14:38.9193660Z env:
+2026-06-04T19:14:38.9193982Z   GH__USERNAME: ***
+2026-06-04T19:14:38.9194534Z   GH__TOKEN: ***
+2026-06-04T19:14:38.9194862Z   GIT__TOKEN: ***
+2026-06-04T19:14:38.9195131Z   GIT__NAME: ***
+2026-06-04T19:14:38.9195419Z   GIT__EMAIL: ***
+2026-06-04T19:14:38.9195766Z   NUGET__TOKEN: ***
+2026-06-04T19:14:38.9196015Z   PipelineEnvironment: true
+2026-06-04T19:14:38.9196286Z   NUGET_XMLDOC_MODE: skip
+2026-06-04T19:14:38.9196547Z   BUILD_VERSION: 4.0.154
+2026-06-04T19:14:38.9196800Z   DOTNET_ROOT: /usr/share/dotnet
+2026-06-04T19:14:38.9197085Z ##[endgroup]
+2026-06-04T19:14:43.3235390Z   Determining projects to restore...
+2026-06-04T19:14:50.9096899Z   Restored /home/runner/work/***.hubspot.runners.openapiclient/***.hubspot.runners.openapiclient/src/Soenneker.HubSpot.Runners.OpenApiClient/Soenneker.HubSpot.Runners.OpenApiClient.csproj (in 6.7 sec).
