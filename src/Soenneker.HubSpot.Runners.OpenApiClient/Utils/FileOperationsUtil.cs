@@ -122,7 +122,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
             if (!file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            if (!TryParseSpecMetadata(file, publicApiSpecsDirectory, out string categoryKey, out int version, out int rollout))
+            if (!TryParseSpecMetadata(file, publicApiSpecsDirectory, out string categoryKey, out SpecVersion version, out int rollout))
                 continue;
 
             bool isOpenApiSpec = await IsOpenApiSpec(file, cancellationToken).ConfigureAwait(false);
@@ -137,7 +137,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
                 continue;
             }
 
-            if (candidate.Version > existing.Version || (candidate.Version == existing.Version && candidate.Rollout > existing.Rollout))
+            int versionComparison = candidate.Version.CompareTo(existing.Version);
+            if (versionComparison > 0 || (versionComparison == 0 && candidate.Rollout > existing.Rollout))
                 candidateByCategory[categoryKey] = candidate;
         }
 
@@ -168,10 +169,11 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         }
     }
 
-    private static bool TryParseSpecMetadata(string filePath, string publicApiSpecsDirectory, out string categoryKey, out int version, out int rollout)
+    internal static bool TryParseSpecMetadata(string filePath, string publicApiSpecsDirectory, out string categoryKey, out SpecVersion version,
+        out int rollout, DateOnly? effectiveDate = null)
     {
         categoryKey = "";
-        version = 0;
+        version = default;
         rollout = 0;
 
         string relative = Path.GetRelativePath(publicApiSpecsDirectory, filePath);
@@ -187,10 +189,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
             return false;
 
         string versionSegment = segments[rolloutsIndex + 2];
-        if (versionSegment.Length < 2 || (versionSegment[0] != 'v' && versionSegment[0] != 'V'))
-            return false;
-
-        if (!int.TryParse(versionSegment[1..], out version))
+        if (!SpecVersion.TryParse(versionSegment, effectiveDate ?? DateOnly.FromDateTime(DateTime.UtcNow), out version))
             return false;
 
         categoryKey = string.Join("/", segments.Take(rolloutsIndex));
@@ -341,5 +340,25 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         await _gitUtil.CommitAndPush(gitDirectory, "Automated update", gitHubToken, name, email, cancellationToken);
     }
 
-    private sealed record SpecCandidate(string CategoryKey, string FilePath, int Version, int Rollout);
+    private sealed record SpecCandidate(string CategoryKey, string FilePath, SpecVersion Version, int Rollout);
+
+    internal readonly record struct SpecVersion(int Value, string Segment) : IComparable<SpecVersion>
+    {
+        public int CompareTo(SpecVersion other) => Value.CompareTo(other.Value);
+
+        internal static bool TryParse(string segment, DateOnly effectiveDate, out SpecVersion version)
+        {
+            version = default;
+
+            if (!DateOnly.TryParseExact(segment + "-01", "yyyy-MM-dd", out DateOnly releaseMonth))
+                return false;
+
+            var effectiveMonth = new DateOnly(effectiveDate.Year, effectiveDate.Month, 1);
+            if (releaseMonth > effectiveMonth)
+                return false;
+
+            version = new SpecVersion((releaseMonth.Year * 100) + releaseMonth.Month, segment);
+            return true;
+        }
+    }
 }
