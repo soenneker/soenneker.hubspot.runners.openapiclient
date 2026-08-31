@@ -47,12 +47,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Extensions.LoggerConfiguration" Version="4.0.1343" />
+        <PackageReference Include="Soenneker.Extensions.LoggerConfiguration" Version="4.0.1347" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
         <PackageReference Include="Soenneker.Kiota.Util" Version="4.0.97" />
-        <PackageReference Include="Soenneker.Managers.Runners" Version="4.0.2390" />
-        <PackageReference Include="Soenneker.OpenApi.Fixer" Version="4.0.313" />
-        <PackageReference Include="Soenneker.OpenApi.Merger" Version="4.0.99" />
-        <PackageReference Include="Soenneker.Utils.File.Download" Version="4.0.1701" />
+        <PackageReference Include="Soenneker.Managers.Runners" Version="4.0.2416" />
+        <PackageReference Include="Soenneker.OpenApi.Fixer" Version="4.0.314" />
+        <PackageReference Include="Soenneker.OpenApi.Merger" Version="4.0.104" />
+        <PackageReference Include="Soenneker.Utils.File.Download" Version="4.0.1708" />
     </ItemGroup>
 </Project>
