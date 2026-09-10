@@ -24,7 +24,6 @@ using System.Threading.Tasks;
 
 namespace Soenneker.HubSpot.Runners.OpenApiClient.Utils;
 
-///<inheritdoc cref="IFileOperationsUtil"/>
 public sealed class FileOperationsUtil : IFileOperationsUtil
 {
     private readonly ILogger<FileOperationsUtil> _logger;
@@ -82,6 +81,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         if (latestSpecCandidates.Count == 0)
             throw new InvalidOperationException("No valid HubSpot OpenAPI specs were found.");
+
+        await PreferOwnedSharedOperations(latestSpecCandidates, cancellationToken).ConfigureAwait(false);
 
         var mergeInputs = new List<(string prefix, string filePath)>(latestSpecCandidates.Count);
 
@@ -148,6 +149,61 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         _logger.LogInformation("Selected {Count} latest category specs out of {Total} files", selected.Count, allFiles.Count);
 
         return selected;
+    }
+
+    private async ValueTask PreferOwnedSharedOperations(List<SpecCandidate> candidates, CancellationToken cancellationToken)
+    {
+        var documents = new Dictionary<string, JsonObject>(StringComparer.OrdinalIgnoreCase);
+        foreach (SpecCandidate candidate in candidates)
+        {
+            string json = await _fileUtil.Read(candidate.FilePath, log: false, cancellationToken);
+            documents.Add(candidate.CategoryKey, JsonNode.Parse(json)!.AsObject());
+        }
+
+        foreach (SpecCandidate candidate in candidates)
+        {
+            JsonObject document = documents[candidate.CategoryKey];
+            int removed = RemoveSharedOperations(candidate.CategoryKey, document, documents);
+            if (removed == 0)
+                continue;
+
+            await _fileUtil.Write(candidate.FilePath, document.ToJsonString(), log: false, cancellationToken);
+            _logger.LogInformation("Using owning category specs for {Count} shared operations repeated in {Category}", removed, candidate.CategoryKey);
+        }
+    }
+
+    internal static int RemoveSharedOperations(string category, JsonObject document, IReadOnlyDictionary<string, JsonObject> documents)
+    {
+        if (document["paths"] is not JsonObject paths)
+            return 0;
+
+        string[] methods = ["get", "put", "post", "delete", "patch", "options", "head", "trace"];
+        int removed = 0;
+        foreach ((string path, JsonNode? node) in paths.ToArray())
+        {
+            // HubSpot repeats generic endpoints in object-specific specs, sometimes with conflicting
+            // schemas or authorization. Prefer the dedicated API's definition only when it supplies that operation.
+            string? owner = path.StartsWith("/crm/objects/", StringComparison.Ordinal) ? "CRM/Objects"
+                : path.StartsWith("/crm/associations/", StringComparison.Ordinal)
+                    ? path.Contains("/definitions/", StringComparison.Ordinal) ? "CRM/Associations Schema" : "CRM/Associations"
+                : path.StartsWith("/crm/extensions/calling/", StringComparison.Ordinal) ? "CRM/Calling Extensions"
+                : null;
+
+            if (owner == null || owner.Equals(category, StringComparison.OrdinalIgnoreCase) || node is not JsonObject pathItem ||
+                !documents.TryGetValue(owner, out JsonObject? ownerDocument) || ownerDocument["paths"]?[path] is not JsonObject ownerPath)
+                continue;
+
+            foreach (string method in methods)
+            {
+                if (ownerPath[method] is JsonObject && pathItem.Remove(method))
+                    removed++;
+            }
+
+            if (!methods.Any(method => pathItem[method] is JsonObject))
+                paths.Remove(path);
+        }
+
+        return removed;
     }
 
     private async ValueTask<bool> IsOpenApiSpec(string filePath, CancellationToken cancellationToken)

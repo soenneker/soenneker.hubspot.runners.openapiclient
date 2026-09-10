@@ -3,6 +3,8 @@ using Soenneker.HubSpot.Runners.OpenApiClient.Utils;
 using Soenneker.Tests.HostedUnit;
 using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Text.Json.Nodes;
 
 namespace Soenneker.HubSpot.Runners.OpenApiClient.Tests;
 
@@ -12,6 +14,31 @@ public sealed class HubSpotOpenApiClientRunnerTests : HostedUnitTest
     public HubSpotOpenApiClientRunnerTests(Host host) : base(host)
     {
 
+    }
+
+    [Test]
+    public void SharedOperations_PreferOwnerAndPreserveUniqueOperations()
+    {
+        const string path = "/crm/objects/2026-09/{objectType}";
+        var repeated = JsonNode.Parse("""{"paths":{"/crm/objects/2026-09/{objectType}":{"get":{"operationId":"duplicate"},"post":{"operationId":"unique"}}}}""")!.AsObject();
+        var owner = JsonNode.Parse("""{"paths":{"/crm/objects/2026-09/{objectType}":{"get":{"operationId":"owner"}}}}""")!.AsObject();
+        var documents = new Dictionary<string, JsonObject> { ["CRM/Objects"] = owner };
+
+        FileOperationsUtil.RemoveSharedOperations("CRM/Appointments", repeated, documents).Should().Be(1);
+        repeated["paths"]![path]!["get"].Should().BeNull();
+        repeated["paths"]![path]!["post"]!["operationId"]!.GetValue<string>().Should().Be("unique");
+        FileOperationsUtil.RemoveSharedOperations("CRM/Objects", owner, documents).Should().Be(0);
+        owner["paths"]![path]!["get"]!["operationId"]!.GetValue<string>().Should().Be("owner");
+    }
+
+    [Test]
+    public void SharedOperations_KeepEndpointWhenOwnerDoesNotSupplyIt()
+    {
+        var document = JsonNode.Parse("""{"paths":{"/crm/objects/2026-09/unique":{"get":{}}}}""")!.AsObject();
+        var documents = new Dictionary<string, JsonObject> { ["CRM/Objects"] = JsonNode.Parse("""{"paths":{}}""")!.AsObject() };
+
+        FileOperationsUtil.RemoveSharedOperations("CRM/Appointments", document, documents).Should().Be(0);
+        document["paths"]!.AsObject().Count.Should().Be(1);
     }
 
     [Test]
