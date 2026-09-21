@@ -89,6 +89,7 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         foreach (SpecCandidate candidate in latestSpecCandidates)
         {
             string mergePrefix = await GetMergePrefix(candidate, cancellationToken).ConfigureAwait(false);
+            await _openApiFixer.Fix(candidate.FilePath, candidate.FilePath, cancellationToken).NoSync();
             mergeInputs.Add((mergePrefix, candidate.FilePath));
         }
 
