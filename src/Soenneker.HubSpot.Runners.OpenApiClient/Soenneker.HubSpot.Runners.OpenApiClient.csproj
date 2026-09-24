@@ -55,4 +55,8 @@
         <PackageReference Include="Soenneker.OpenApi.Merger" Version="4.0.173" />
         <PackageReference Include="Soenneker.Utils.File.Download" Version="4.0.1770" />
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Soenneker.Enums.DeployEnvironment" Version="4.0.242" />
+        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="4.0.123" />
+    </ItemGroup>
 </Project>

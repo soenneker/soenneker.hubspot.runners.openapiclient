@@ -27,4 +27,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\Soenneker.HubSpot.Runners.OpenApiClient\Soenneker.HubSpot.Runners.OpenApiClient.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AwesomeAssertions" Version="9.6.0" />
+    </ItemGroup>
 </Project>
