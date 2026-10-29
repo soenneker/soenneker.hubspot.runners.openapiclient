@@ -54,7 +54,7 @@
         <PackageReference Include="Soenneker.Managers.Runners" Version="11.0.2666" />
         <PackageReference Include="Soenneker.OpenApi.Fixer" Version="11.0.410" />
         <PackageReference Include="Soenneker.OpenApi.Merger" Version="11.0.241" />
-        <PackageReference Include="Soenneker.Utils.File.Download" Version="11.0.1833" />
+        <PackageReference Include="Soenneker.Utils.File.Download" Version="11.0.1834" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Soenneker.Enums.DeployEnvironment" Version="11.0.262" />
