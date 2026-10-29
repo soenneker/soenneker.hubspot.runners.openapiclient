@@ -19,6 +19,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -192,12 +193,21 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
                 : null;
 
             if (owner == null || owner.Equals(category, StringComparison.OrdinalIgnoreCase) || node is not JsonObject pathItem ||
-                !documents.TryGetValue(owner, out JsonObject? ownerDocument) || ownerDocument["paths"]?[path] is not JsonObject ownerPath)
+                !documents.TryGetValue(owner, out JsonObject? ownerDocument) || ownerDocument["paths"] is not JsonObject ownerPaths)
+                continue;
+
+            // Parameter names do not distinguish OpenAPI routes: {fromObjectType} and {objectType}
+            // identify the same template. Keep literal segments (including API versions) intact.
+            string template = Regex.Replace(path, @"\{[^{}]+\}", "{}");
+            JsonObject[] matchingOwnerPaths = ownerPaths
+                .Where(entry => Regex.Replace(entry.Key, @"\{[^{}]+\}", "{}").Equals(template, StringComparison.Ordinal))
+                .Select(entry => entry.Value).OfType<JsonObject>().ToArray();
+            if (matchingOwnerPaths.Length == 0)
                 continue;
 
             foreach (string method in methods)
             {
-                if (ownerPath[method] is JsonObject && pathItem.Remove(method))
+                if (matchingOwnerPaths.Any(ownerPath => ownerPath[method] is JsonObject) && pathItem.Remove(method))
                     removed++;
             }
 
