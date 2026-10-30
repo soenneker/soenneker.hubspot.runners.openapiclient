@@ -192,6 +192,15 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
                 : path.StartsWith("/crm/extensions/calling/", StringComparison.Ordinal) ? "CRM/Calling Extensions"
                 : null;
 
+            bool HasRoute(string candidate)
+            {
+                string shape = Regex.Replace(path, @"\{[^{}]+\}", "{}");
+                return documents.TryGetValue(candidate, out JsonObject? owned) && owned["paths"] is JsonObject candidates &&
+                       candidates.Any(entry => Regex.Replace(entry.Key, @"\{[^{}]+\}", "{}").Equals(shape, StringComparison.Ordinal));
+            }
+            if (owner == "CRM/Objects" && !HasRoute(owner) && HasRoute("CRM/Custom Objects"))
+                owner = "CRM/Custom Objects";
+
             if (owner == null || owner.Equals(category, StringComparison.OrdinalIgnoreCase) || node is not JsonObject pathItem ||
                 !documents.TryGetValue(owner, out JsonObject? ownerDocument) || ownerDocument["paths"] is not JsonObject ownerPaths)
                 continue;

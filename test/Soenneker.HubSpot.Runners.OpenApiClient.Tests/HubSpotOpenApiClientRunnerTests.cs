@@ -17,6 +17,23 @@ public sealed class HubSpotOpenApiClientRunnerTests : HostedUnitTest
     }
 
     [Test]
+    public void SharedOperations_UseCustomObjectsWhenGeneralObjectsLacksTheRoute()
+    {
+        const string route = "/crm/objects/2026-09/{fromObjectType}/gdpr-delete";
+        var duplicate = JsonNode.Parse("""{"paths":{"/crm/objects/2026-09/{fromObjectType}/gdpr-delete":{"post":{},"get":{}}}}""")!.AsObject();
+        var custom = JsonNode.Parse("""{"paths":{"/crm/objects/2026-09/{objectType}/gdpr-delete":{"post":{}}}}""")!.AsObject();
+        var documents = new Dictionary<string, JsonObject>
+        {
+            ["CRM/Objects"] = JsonNode.Parse("""{"paths":{}}""")!.AsObject(),
+            ["CRM/Custom Objects"] = custom
+        };
+        FileOperationsUtil.RemoveSharedOperations("CRM/Appointments", duplicate, documents).Should().Be(1);
+        duplicate["paths"]![route]!["post"].Should().BeNull();
+        duplicate["paths"]![route]!["get"].Should().NotBeNull();
+        FileOperationsUtil.RemoveSharedOperations("CRM/Custom Objects", custom, documents).Should().Be(0);
+    }
+
+    [Test]
     public void SharedOperations_PreferOwnerAndPreserveUniqueOperations()
     {
         const string path = "/crm/objects/2026-09/{objectType}";
