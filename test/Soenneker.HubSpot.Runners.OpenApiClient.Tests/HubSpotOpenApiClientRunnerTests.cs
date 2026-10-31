@@ -17,6 +17,34 @@ public sealed class HubSpotOpenApiClientRunnerTests : HostedUnitTest
     }
 
     [Test]
+    public void SharedOperations_UseAssociationsOwnerForObjectAssociationRoutes()
+    {
+        const string route = "/crm/objects/2026-09/{fromObjectType}/{fromObjectId}/associations/default/{toObjectType}/{toObjectId}";
+        var repeated = new JsonObject { ["paths"] = new JsonObject { [route] = new JsonObject
+        {
+            ["put"] = new JsonObject { ["operationId"] = "duplicate" },
+            ["get"] = new JsonObject { ["operationId"] = "unique" }
+        } } };
+        var owner = new JsonObject { ["paths"] = new JsonObject { [route] = new JsonObject
+        {
+            ["put"] = new JsonObject { ["operationId"] = "owner" }
+        } } };
+        string originalOwner = owner.ToJsonString();
+        var documents = new Dictionary<string, JsonObject>
+        {
+            ["CRM/Objects"] = JsonNode.Parse("""{"paths":{}}""")!.AsObject(),
+            ["CRM/Custom Objects"] = JsonNode.Parse("""{"paths":{}}""")!.AsObject(),
+            ["CRM/Associations"] = owner
+        };
+
+        FileOperationsUtil.RemoveSharedOperations("CRM/Appointments", repeated, documents).Should().Be(1);
+        repeated["paths"]![route]!["put"].Should().BeNull();
+        repeated["paths"]![route]!["get"]!["operationId"]!.GetValue<string>().Should().Be("unique");
+        FileOperationsUtil.RemoveSharedOperations("CRM/Associations", owner, documents).Should().Be(0);
+        owner.ToJsonString().Should().Be(originalOwner);
+    }
+
+    [Test]
     public void SharedOperations_UseCustomObjectsWhenGeneralObjectsLacksTheRoute()
     {
         const string route = "/crm/objects/2026-09/{fromObjectType}/gdpr-delete";

@@ -186,7 +186,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         {
             // HubSpot repeats generic endpoints in object-specific specs, sometimes with conflicting
             // schemas or authorization. Prefer the dedicated API's definition only when it supplies that operation.
-            string? owner = path.StartsWith("/crm/objects/", StringComparison.Ordinal) ? "CRM/Objects"
+            string? owner = path.StartsWith("/crm/objects/", StringComparison.Ordinal)
+                ? path.Contains("/associations/", StringComparison.Ordinal) ? "CRM/Associations" : "CRM/Objects"
                 : path.StartsWith("/crm/associations/", StringComparison.Ordinal)
                     ? path.Contains("/definitions/", StringComparison.Ordinal) ? "CRM/Associations Schema" : "CRM/Associations"
                 : path.StartsWith("/crm/extensions/calling/", StringComparison.Ordinal) ? "CRM/Calling Extensions"
